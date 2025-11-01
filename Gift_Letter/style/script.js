@@ -7,6 +7,16 @@ $(document).ready(function () {
   const totalPages = 23;
   let isOpen = false;
 
+  // Prevent double tap zoom on mobile
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', function (event) {
+    const now = (new Date()).getTime();
+    if (now - lastTouchEnd <= 300) {
+      event.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, false);
+
   envelope.on('click', function () {
       if (isOpen) nextLyric();
   });
@@ -53,6 +63,8 @@ function playAudioOnce() {
             hasPlayed = true;
         }).catch((e) => {
             console.log("Không thể phát nhạc:", e);
+            // On mobile, audio might require user interaction
+            // We'll try again on next interaction
         });
     }
 }
@@ -72,3 +84,13 @@ resetBtn.addEventListener("click", function () {
     resetBtn.style.display = "none";
     playAudioOnce();
 });
+
+// Enable audio on mobile after first interaction
+document.addEventListener('touchstart', function() {
+    if (!hasPlayed && audio) {
+        audio.play().then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+        }).catch(() => {});
+    }
+}, { once: true });
